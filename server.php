@@ -176,7 +176,10 @@ if (in_array("-full", $argv)) {
 								$salt = uniqid(mt_rand(), true); // generate a good salt
 								$sql = "INSERT INTO devices (id,salt) VALUES ('$regId','$salt') ON DUPLICATE KEY UPDATE salt='$salt'";
 								$this->query($sql);
-								$this->send_to_device($regId,array('event'=>'SALT','salt'=>$salt));
+								$this->send_to_device($regId,array(
+										'event'=>'SALT',
+										'salt'=>$salt,
+									));
 							} else {
 								$login = $result[0]['login'];
 								$this->send_to_device($regId,array(
