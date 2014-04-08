@@ -7,17 +7,24 @@
  *
  */
 
+// database connection settings
+define("DB_NAME","app");
+define("DB_USER","app_service");
+define("DB_PASSWORD","7Yt2J6fVGDKc6qV8");
+define("DB_HOST","localhost");
+define("DB_PORT","5432");
+
+define("READ_BUFFER_SIZE_FOR_APPS", 64*1024);
+
 error_reporting(E_ALL);
 
-$ip="127.0.0.1";		// TCP IP address to listen on
+$ip="80.78.247.202";		// TCP IP address to listen on
 // these ports should be allowed through the firewall
 $app_port = "8099";		// TCP port for android app connections
 
 require "JAXL/jaxl.php";
 require_once 'JAXL/core/jaxl_logger.php'; // class for logging purposes
 require "streamsocketserver.class.php";
-
-define("READ_BUFFER_SIZE_FOR_APPS", 64*1024);
 
 JAXLLogger::$max_log_size = 64*1024;
 
@@ -62,8 +69,9 @@ if (in_array("-full", $argv)) {
 			ob_implicit_flush ();
 
 			// database handle and settings
+			
 			try {
-				$this->DBHandle = new PDO('mysql:host=localhost;port=5432;dbname=app', 'app_service', 'cicina', array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''));
+				$this->DBHandle = new PDO("mysql:host=".DB_HOST.";port=".DB_PORT.";dbname=".DB_NAME, DB_USER, DB_PASSWORD, array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''));
 			} catch (PDOException $e) {
 				echo 'Connection failed: ' . $e->getMessage();
 			}
@@ -141,6 +149,7 @@ if (in_array("-full", $argv)) {
 		 *		SALT
 		 *		LOGOUT
 		 *		LOGIN
+		 *		POST
 		 */		
 		function process_app_message($user, $buffer) {
 			foreach (explode(PHP_EOL,$buffer) as $buf) {
@@ -243,6 +252,18 @@ if (in_array("-full", $argv)) {
 									}
 								}
 							}
+							break;
+						case "POST":
+							$message = $data['data']['message'];
+							_info("Message received: $message");
+							$latitude = $data['data']['latitude'];
+							_info("Latitude: $latitude");
+							$longitude = $data['data']['longitude'];
+							_info("Longitude: $longitude");
+							// save this message into the database, public messages table
+							$sql = "INSERT INTO messages_public (regId,message,latitude,longitude) VALUES ('$regId','$message','$latitude','$longitude')";
+							$this->query($sql);
+							_debug("Message was saved into messages_public table.");
 							break;
 					}
 				}
